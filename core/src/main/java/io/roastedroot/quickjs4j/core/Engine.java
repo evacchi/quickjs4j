@@ -3,6 +3,7 @@ package io.roastedroot.quickjs4j.core;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.dylibso.chicory.annotations.WasmModuleInterface;
+import com.dylibso.chicory.log.Logger;
 import com.dylibso.chicory.runtime.ByteArrayMemory;
 import com.dylibso.chicory.runtime.HostFunction;
 import com.dylibso.chicory.runtime.ImportValues;
@@ -80,7 +81,22 @@ public final class Engine implements AutoCloseable {
         var wasiOptsBuilder = WasiOptions.builder().withStdout(stdout).withStderr(stderr);
 
         this.wasiOpts = wasiOptsBuilder.build();
-        this.wasi = WasiPreview1.builder().withOptions(this.wasiOpts).build();
+        this.wasi =
+                WasiPreview1.builder()
+                        .withOptions(this.wasiOpts)
+                        .withLogger(
+                                new Logger() {
+                                    @Override
+                                    public void log(Level level, String msg, Throwable throwable) {
+                                        System.out.printf("%s: %s%n", level, msg);
+                                    }
+
+                                    @Override
+                                    public boolean isLoggable(Level level) {
+                                        return true;
+                                    }
+                                })
+                        .build();
         // set_result builtins
         invokables.entrySet().stream()
                 .forEach(
